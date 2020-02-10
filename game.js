@@ -86,12 +86,6 @@ const shuffle = function(array) {
   }
 };
 
-const init = function() {
-  const canvas = document.getElementById("game");
-  const ctx = canvas.getContext('2d');
-  return ctx;
-};
-
 const drawCard = function(ctx, x, y, card, orientation) {
   ctx.fillStyle = "white";
   ctx.strokeWidth = BORDER_SIZE;
@@ -202,10 +196,29 @@ const makeGame = function() {
   };
 };
 
-document.addEventListener("DOMContentLoaded", function() {
-  const ctx = init();
-  const game = makeGame();
-
+const draw = function(ctx, game) {
   drawBackground(ctx);
   drawHand(ctx, game.hands[PLAYERS.indexOf(SOUTH)]);
+};
+
+const advance = function(ctx, game) {
+  game.hands[PLAYERS.indexOf(SOUTH)].pop();
+  draw(ctx, game);
+};
+
+const makeClickHandler = function(ctx, game) {
+  return function(event) {
+    advance(ctx, game);
+  }
+};
+
+document.addEventListener("DOMContentLoaded", function() {
+  const canvas = document.getElementById("game");
+  const ctx = canvas.getContext('2d');
+
+  const game = makeGame();
+  canvas.addEventListener("click", makeClickHandler(ctx, game));
+
+  // initial draw
+  draw(ctx, game);
 });
