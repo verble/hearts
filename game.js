@@ -8,6 +8,12 @@ const BORDER_SIZE = 5;
 const VERTICAL = "vertical";
 const HORIZONTAL = "horizontal";
 
+const NORTH = "north";
+const EAST = "east";
+const SOUTH = "south";
+const WEST = "west";
+const PLAYERS = [NORTH, EAST, SOUTH, WEST];
+
 const HEARTS = "♥";
 const SPADES = "♠";
 const DIAMONDS = "♦";
@@ -173,10 +179,33 @@ const makeHands = function() {
   return hands;
 };
 
-document.addEventListener("DOMContentLoaded", function() {
-  const ctx = init();
+const makeGame = function() {
   const hands = makeHands();
 
+  // who has the two of clubs?
+  const starter = function() {
+    for (let i = 0; i < 4; i++) {
+      let hasTwoOfClubs = hands[i].find(function(card) {
+        return card.rank === "2" && card.suit === CLUBS;
+      });
+      if (hasTwoOfClubs != undefined) {
+        return PLAYERS[i];
+      }
+    }
+  }();
+
+  // game state object
+  return {
+    hands: hands,
+    turn: starter,
+    tricks: []
+  };
+};
+
+document.addEventListener("DOMContentLoaded", function() {
+  const ctx = init();
+  const game = makeGame();
+
   drawBackground(ctx);
-  drawHand(ctx, hands[0]);
+  drawHand(ctx, game.hands[PLAYERS.indexOf(SOUTH)]);
 });
