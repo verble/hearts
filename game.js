@@ -39,6 +39,8 @@ Card.prototype.suitColor = function() {
   }
 };
 
+const TWO_CLUBS = new Card("2", CLUBS);
+
 const suitCompare = function(a, b) {
   let aIx = SUITS.indexOf(a);
   let bIx = SUITS.indexOf(b);
@@ -92,6 +94,11 @@ const shuffle = function(array) {
     array[j] = temp;
   }
 };
+
+const pick = function(array) {
+  const i = Math.floor(Math.random() * (array.length - 1));
+  return array[i];
+}
 
 const drawCard = function(ctx, x, y, card, orientation) {
   ctx.fillStyle = "white";
@@ -199,7 +206,12 @@ const makeGame = function() {
   return {
     hands: hands,
     turn: starter,
-    tricks: []
+    tricks: [],
+    currentTrick: [],
+
+    currentHand: function() {
+      return this.hands[PLAYERS.indexOf(this.turn)];
+    }
   };
 };
 
@@ -208,8 +220,101 @@ const draw = function(ctx, game) {
   drawHand(ctx, game.hands[PLAYERS.indexOf(SOUTH)]);
 };
 
+const playableCards = function(game) {
+  // is this the start of the game?
+  const isStartOfGame =
+    game.tricks.length === 0 && game.currentTrick.length === 0;
+  if (isStartOfGame) {
+    // yes, we have to play the two of clubs
+    return [TWO_CLUBS];
+  }
+
+  // is this the start of the trick?
+  const isStartOfTrick = game.currentTrick.length === 0;
+
+  // have hearts been broken?
+  const heartsBroken = function() {
+    let previousPlays = game.currentTrick.concat(game.tricks.flat());
+    let previousCards = previousPlays.map(play => play.card);
+    let firstHeart = previousCards.find(card => card.suit === HEARTS);
+
+    return firstHeart != undefined;
+  }();
+
+  if (isStartOfTrick && !heartsBroken) {
+    // can play anything except hearts
+    return game.currentHand().filter(card => card.suit != HEARTS);
+  } else if (isStartOfTrick) {
+    // can play anything
+    return game.currentHand().slice(0);
+  }
+
+  // if not start of trick, can we follow suit?
+  const leadingSuit = game.currentTrick[0].card.suit;
+  const matchingCards =
+    game.currentHand().filter(card => card.suit === leadingSuit);
+
+  if (matchingCards.length != 0) {
+    // yes, must follow suit
+    return matchingCards;
+  } else {
+    // no, we can play anything
+    return game.currentHand().slice(0);
+  }
+};
+
+const trickWinner = function(trick) {
+  const leadingSuit = trick[0].card.suit;
+  let winningPlayIx = 0;
+
+  for (let i = 1; i < 4; i++) {
+    let nextCard = trick[i].card;
+
+    let followedSuit = leadingSuit === nextCard.suit;
+    let higherRanked =
+      rankCompare(trick[winningPlayIx].card.rank, nextCard.rank) < 0;
+
+    if (followedSuit && higherRanked) {
+      winningPlayIx = i;
+    }
+  }
+
+  return trick[winningPlayIx].player;
+};
+
 const advance = function(ctx, game) {
-  game.hands[PLAYERS.indexOf(SOUTH)].pop();
+  // play a random (allowed) card
+  const ps = playableCards(game);
+  const randomCard = pick(ps);
+  const i = game.currentHand().findIndex(card => card.eq(randomCard));
+
+  console.log(game.turn + " played " + randomCard.rank + randomCard.suit);
+  game.currentTrick.push({
+    card: randomCard,
+    player: game.turn
+  });
+  game.currentHand().splice(i, 1);
+
+  // is round over?
+  if (game.currentTrick.length === 4) {
+    // yes, winner of trick is next to play
+    game.turn = trickWinner(game.currentTrick);
+    console.log(game.turn + " takes the trick");
+
+    // reset current trick
+    game.tricks.push(game.currentTrick);
+    game.currentTrick = [];
+  } else {
+    // no, play continues clockwise
+    let i = PLAYERS.indexOf(game.turn);
+    if (i == PLAYERS.length - 1) {
+      i = 0;
+    } else {
+      i++;
+    }
+    game.turn = PLAYERS[i];
+  }
+
   draw(ctx, game);
 };
 
