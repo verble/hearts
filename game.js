@@ -1,5 +1,7 @@
 "use strict";
 
+const CANVAS_WIDTH = 800;
+const CANVAS_HEIGHT = 600;
 const CARD_WIDTH = 110;
 const CARD_HEIGHT = 160;
 const FONT_SIZE = 20;
@@ -169,7 +171,7 @@ const drawHand = function(ctx, hand) {
 
 const drawBackground = function(ctx) {
   ctx.fillStyle = "green";
-  ctx.fillRect(0, 0, 800, 600);
+  ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 };
 
 const makeHands = function() {
@@ -215,8 +217,43 @@ const makeGame = function() {
   };
 };
 
+const drawTrick = function(ctx, trick) {
+
+  const centerX = CANVAS_WIDTH / 2;
+  const centerY = CANVAS_HEIGHT / 2 - CARD_HEIGHT / 3;
+  const centerMargin = 10;
+
+  const opts = {};
+  opts[NORTH] = {
+      x: centerX - (CARD_WIDTH / 2),
+      y: centerY - CARD_HEIGHT - centerMargin,
+      orientation: VERTICAL
+  };
+  opts[EAST] = {
+      x: centerX + centerMargin,
+      y: centerY - (CARD_WIDTH / 2),
+      orientation: HORIZONTAL
+  };
+  opts[SOUTH] = {
+    x: centerX - (CARD_WIDTH / 2),
+    y: centerY + centerMargin,
+    orientation: VERTICAL
+  };
+  opts[WEST] = {
+    x: centerX - CARD_HEIGHT - centerMargin,
+    y: centerY - (CARD_WIDTH / 2),
+    orientation: HORIZONTAL
+  };
+
+  for (let i = 0; i < trick.length; i++) {
+    let o = opts[trick[i].player];
+    drawCard(ctx, o.x, o.y, trick[i].card, o.orientation);
+  }
+};
+
 const draw = function(ctx, game) {
   drawBackground(ctx);
+  drawTrick(ctx, game.currentTrick);
   drawHand(ctx, game.hands[PLAYERS.indexOf(SOUTH)]);
 };
 
