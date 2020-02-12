@@ -319,7 +319,7 @@ const trickWinner = function(trick) {
   return trick[winningPlayIx].player;
 };
 
-const advance = function(ctx, game) {
+const advance = function(game) {
   // play a random (allowed) card
   const ps = playableCards(game);
   const randomCard = pick(ps);
@@ -351,13 +351,12 @@ const advance = function(ctx, game) {
     }
     game.turn = PLAYERS[i];
   }
-
-  draw(ctx, game);
 };
 
 const makeClickHandler = function(ctx, game) {
   return function(event) {
-    advance(ctx, game);
+    advance(game);
+    draw(ctx, game);
   }
 };
 
