@@ -19,7 +19,7 @@ const SPADES = "♠";
 const DIAMONDS = "♦";
 const CLUBS = "♣";
 
-const RANKS = ["2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
+const RANKS = ["2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A"];
 const SUITS = [HEARTS, SPADES, DIAMONDS, CLUBS];
 
 // let card = { rank: "3", suit: HEARTS };
