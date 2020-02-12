@@ -22,10 +22,17 @@ const CLUBS = "♣";
 const RANKS = ["2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A"];
 const SUITS = [HEARTS, SPADES, DIAMONDS, CLUBS];
 
-// let card = { rank: "3", suit: HEARTS };
+const Card = function(rank, suit) {
+  this.rank = rank;
+  this.suit = suit;
+};
 
-const suitColor = function(suit) {
-  if (suit == HEARTS || suit == DIAMONDS) {
+Card.prototype.eq = function(card) {
+  return this.rank === card.rank && this.suit == card.suit;
+};
+
+Card.prototype.suitColor = function() {
+  if (this.suit == HEARTS || this.suit == DIAMONDS) {
     return "red";
   } else {
     return "black";
@@ -70,7 +77,7 @@ const NEW_DECK = function() {
   var deck = [];
   for (let suit of SUITS) {
     for (let rank of RANKS) {
-      deck.push({rank, suit});
+      deck.push(new Card(rank, suit));
     }
   }
   return deck;
@@ -105,7 +112,7 @@ const drawCard = function(ctx, x, y, card, orientation) {
   ctx.fillRect(x, y, width, height);
   ctx.strokeRect(x, y, width, height);
 
-  ctx.fillStyle = suitColor(card.suit);
+  ctx.fillStyle = card.suitColor();
   const label = card.rank + card.suit;
 
   if (orientation == VERTICAL) {
