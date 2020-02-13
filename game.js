@@ -42,6 +42,7 @@ Card.prototype.suitColor = function() {
 };
 
 const TWO_CLUBS = new Card("2", CLUBS);
+const QUEEN_SPADES = new Card("Q", SPADES);
 
 const suitCompare = function(a, b) {
   let aIx = SUITS.indexOf(a);
@@ -319,6 +320,32 @@ const trickWinner = function(trick) {
   return trick[winningPlayIx].player;
 };
 
+const score = function(tricks) {
+  const score = {
+    [NORTH]: 0,
+    [SOUTH]: 0,
+    [EAST]: 0,
+    [WEST]: 0
+  };
+
+  for (let i = 0; i < tricks.length; i++) {
+    const winner = trickWinner(tricks[i]);
+    const points = tricks[i].reduce(function(sum, play) {
+      if (play.card.suit == HEARTS) {
+        return sum + 1;
+      } else if (play.card.eq(QUEEN_SPADES)) {
+        return sum + 13;
+      } else {
+        return sum
+      }
+    }, 0);
+
+    score[winner] += points;
+  };
+
+  return score;
+};
+
 const advance = function(game) {
   // play a random (allowed) card
   const ps = playableCards(game);
@@ -350,6 +377,12 @@ const advance = function(game) {
       i++;
     }
     game.turn = PLAYERS[i];
+  }
+
+  // is game over?
+  if (game.hands.every(hand => hand.length === 0)) {
+    console.log("game over");
+    console.log(score(game.tricks));
   }
 };
 
