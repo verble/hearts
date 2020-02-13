@@ -246,7 +246,7 @@ const makeGame = function() {
 const drawTrick = function(ctx, trick) {
 
   const centerX = CANVAS_WIDTH / 2;
-  const centerY = CANVAS_HEIGHT / 2 - CARD_HEIGHT / 3;
+  const centerY = CANVAS_HEIGHT / 2;
   const centerMargin = 10;
 
   const opts = {};
