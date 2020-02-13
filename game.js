@@ -252,10 +252,68 @@ const drawTrick = function(ctx, trick) {
   }
 };
 
+// (x, y) is located at the bottom middle of the card
+const drawReverse = function(ctx, x, y, deg) {
+  const margin = 10;
+
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(deg * 2 * Math.PI / 360);
+
+  const adjX = -CARD_WIDTH / 2;
+  const adjY = -CARD_HEIGHT;
+
+  // back
+  ctx.fillStyle = "white";
+  ctx.fillRect(adjX, adjY, CARD_WIDTH, CARD_HEIGHT);
+
+  // border
+  ctx.strokeWidth = BORDER_SIZE;
+  ctx.strokeRect(adjX, adjY, CARD_WIDTH, CARD_HEIGHT);
+
+  // inset rectangle
+  ctx.fillStyle = "#beebe9";
+  ctx.fillRect(
+    adjX + margin,
+    adjY + margin,
+    CARD_WIDTH - margin * 2,
+    CARD_HEIGHT - margin * 2
+  );
+
+  ctx.restore();
+};
+
+// (x, y) is located at the bottom middle of fan
+// at the edge of the cards
+const drawFan = function(ctx, numCards, x, y, deg) {
+  const rotationIncrement = 6;
+  const baseRotation = -rotationIncrement * (numCards - 1) / 2;
+  const degreeConvFactor = 2 * Math.PI / 360;
+
+  const xIncrement = 6;
+  const baseX = -xIncrement * numCards / 2;
+
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(deg * degreeConvFactor);
+
+  for (let i = 0; i < numCards; i++) {
+    const ix = i * xIncrement + baseX;
+    const ideg = i * rotationIncrement + baseRotation;
+    drawReverse(ctx, ix, 0, ideg);
+  }
+  ctx.restore();
+};
+
 const draw = function(ctx, game) {
   drawBackground(ctx);
   drawTrick(ctx, game.currentTrick);
   drawHand(ctx, game.hands[PLAYERS.indexOf(SOUTH)]);
+
+  // draw computer hands
+  drawFan(ctx, game.hands[PLAYERS.indexOf(NORTH)].length, -60, 300, 90);
+  drawFan(ctx, game.hands[PLAYERS.indexOf(EAST)].length, 400, -60, 180);
+  drawFan(ctx, game.hands[PLAYERS.indexOf(WEST)].length, 860, 300, 270);
 };
 
 const playableCards = function(game) {
