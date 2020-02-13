@@ -98,6 +98,38 @@ const shuffle = function(array) {
   }
 };
 
+const BoundingBox = function(x, y, width, height) {
+  this.x = x;
+  this.y = y;
+  this.width = width;
+  this.height = height;
+};
+
+BoundingBox.prototype.contains = function(x, y) {
+  const inX = this.x <= x && x <= (this.x + this.width);
+  const inY = this.y <= y && y <= (this.y + this.height);
+  return inX && inY;
+};
+
+const cardBounds = function(ctx, numCards) {
+  const xOverlapFactor = 2.3;
+  const yOverlapFactor = 0.6;
+
+  const visibleCardWidth = CARD_WIDTH/xOverlapFactor;
+  const usedSpace = visibleCardWidth * (numCards - 1) + CARD_WIDTH;
+
+  // starting values of x and y
+  let x = (ctx.canvas.clientWidth - usedSpace) / 2;
+  const y = ctx.canvas.clientHeight - (yOverlapFactor * CARD_HEIGHT);
+
+  const bounds = [];
+  for (let i = 0; i < numCards; i++) {
+    bounds.push(new BoundingBox(x, y, CARD_WIDTH, CARD_HEIGHT));
+    x += visibleCardWidth;
+  }
+  return bounds;
+};
+
 const pick = function(array) {
   const i = Math.floor(Math.random() * (array.length - 1));
   return array[i];
@@ -156,17 +188,10 @@ const drawCard = function(ctx, x, y, card, orientation) {
 };
 
 const drawHand = function(ctx, hand) {
-  let xOverlapFactor = 2.3;
-  let yOverlapFactor = 0.6;
-  let visibleCardWidth = CARD_WIDTH/xOverlapFactor;
-  let usedSpace = visibleCardWidth * (hand.length - 1) + CARD_WIDTH;
-
-  let x = (ctx.canvas.clientWidth - usedSpace) / 2;
-  let y = ctx.canvas.clientHeight - (yOverlapFactor * CARD_HEIGHT);
+  const bounds = cardBounds(ctx, hand.length);
 
   for (let i = 0; i < hand.length; i++) {
-    drawCard(ctx, x, y, hand[i], VERTICAL);
-    x += visibleCardWidth;
+    drawCard(ctx, bounds[i].x, bounds[i].y, hand[i], VERTICAL);
   }
 };
 
@@ -444,11 +469,37 @@ const advance = function(game) {
   }
 };
 
+const getSelectedCard = function(ctx, game, x, y) {
+  const playerHand = game.hands[PLAYERS.indexOf(SOUTH)];
+  const bounds = cardBounds(ctx, playerHand.length);
+
+  let selected = undefined;
+  // cards with a higher z-index appear later in the array,
+  // so this loop returns the topmost card in the case that
+  // the click coordinates are over multiple cards
+  for (let i = 0; i < playerHand.length; i++) {
+    if (bounds[i].contains(x, y)) {
+      selected = playerHand[i];
+    }
+  }
+
+  return selected;
+};
+
 const makeClickHandler = function(ctx, game) {
   return function(event) {
+    // process input
+    const canvasRect = ctx.canvas.getBoundingClientRect();
+    const x = event.clientX - canvasRect.left;
+    const y = event.clientY - canvasRect.top;
+    let selected = getSelectedCard(ctx, game, x, y);
+    if (selected != undefined) {
+      console.log("clicked on " + selected.rank + selected.suit);
+    };
+
     advance(game);
     draw(ctx, game);
-  }
+  };
 };
 
 document.addEventListener("DOMContentLoaded", function() {
