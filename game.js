@@ -429,15 +429,35 @@ const score = function(tricks) {
   return score;
 };
 
-const advance = function(game) {
-  // play a random (allowed) card
+const advance = function(game, selected) {
+  let cardToPlay = null;
   const ps = playableCards(game);
-  const randomCard = pick(ps);
-  const i = game.currentHand().findIndex(card => card.eq(randomCard));
 
-  console.log(game.turn + " played " + randomCard.rank + randomCard.suit);
+  // is it the player's turn?
+  if (game.turn == SOUTH) {
+    // did the player select a card?
+    if (selected === undefined) {
+      // do nothing
+      return;
+    }
+
+    // is player's choice allowed?
+    if (ps.findIndex(card => card.eq(selected)) != -1) {
+      cardToPlay = selected;
+    } else {
+      // do nothing
+      return;
+    }
+  } else {
+    // play a random (allowed) card
+    cardToPlay = pick(ps);
+  }
+
+  const i = game.currentHand().findIndex(card => card.eq(cardToPlay));
+
+  console.log(game.turn + " played " + cardToPlay.rank + cardToPlay.suit);
   game.currentTrick.push({
-    card: randomCard,
+    card: cardToPlay,
     player: game.turn
   });
   game.currentHand().splice(i, 1);
@@ -493,11 +513,8 @@ const makeClickHandler = function(ctx, game) {
     const x = event.clientX - canvasRect.left;
     const y = event.clientY - canvasRect.top;
     let selected = getSelectedCard(ctx, game, x, y);
-    if (selected != undefined) {
-      console.log("clicked on " + selected.rank + selected.suit);
-    };
 
-    advance(game);
+    advance(game, selected);
     draw(ctx, game);
   };
 };
