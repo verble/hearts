@@ -220,33 +220,29 @@ const makeHands = function() {
   return hands;
 };
 
-const makeGame = function() {
-  const hands = makeHands();
+const Game = function() {
+  this.hands = makeHands();
 
   // who has the two of clubs?
-  const starter = function() {
+  const starter = (() => {
     for (let i = 0; i < 4; i++) {
-      let hasTwoOfClubs = hands[i].find(function(card) {
+      let hasTwoOfClubs = this.hands[i].find(function(card) {
         return card.rank === "2" && card.suit === CLUBS;
       });
       if (hasTwoOfClubs != undefined) {
         return PLAYERS[i];
       }
     }
-  }();
+  })();
 
-  // game state object
-  return {
-    hands: hands,
-    turn: starter,
-    tricks: [],
-    currentTrick: [],
-    state: NORMAL,
+  this.turn = starter;
+  this.tricks = [];
+  this.currentTrick = [];
+  this.state = NORMAL;
+};
 
-    currentHand: function() {
-      return this.hands[PLAYERS.indexOf(this.turn)];
-    }
-  };
+Game.prototype.currentHand = function() {
+  return this.hands[PLAYERS.indexOf(this.turn)];
 };
 
 const drawTrick = function(ctx, trick) {
@@ -553,7 +549,7 @@ document.addEventListener("DOMContentLoaded", function() {
   const canvas = document.getElementById("game");
   const ctx = canvas.getContext('2d');
 
-  const game = makeGame();
+  const game = new Game();
   canvas.addEventListener("click", makeClickHandler(ctx, game));
 
   // initial draw
