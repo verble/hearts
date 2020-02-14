@@ -392,7 +392,16 @@ const drawFan = function(ctx, numCards, x, y, deg) {
 
 const draw = function(ctx, game) {
   drawBackground(ctx);
-  drawTrick(ctx, game.currentTrick);
+
+  const trick = function() {
+    if (game.state === TRICK_END) {
+      return game.tricks[game.tricks.length - 1];
+    } else {
+      return game.currentTrick;
+    }
+  }();
+  drawTrick(ctx, trick);
+
   drawHand(ctx, game.hands[PLAYERS.indexOf(SOUTH)]);
 
   // draw computer hands
