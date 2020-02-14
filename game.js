@@ -336,9 +336,9 @@ const draw = function(ctx, game) {
   drawHand(ctx, game.hands[PLAYERS.indexOf(SOUTH)]);
 
   // draw computer hands
-  drawFan(ctx, game.hands[PLAYERS.indexOf(NORTH)].length, -60, 300, 90);
-  drawFan(ctx, game.hands[PLAYERS.indexOf(EAST)].length, 400, -60, 180);
-  drawFan(ctx, game.hands[PLAYERS.indexOf(WEST)].length, 860, 300, 270);
+  drawFan(ctx, game.hands[PLAYERS.indexOf(NORTH)].length, 400, -60, 180);
+  drawFan(ctx, game.hands[PLAYERS.indexOf(EAST)].length, 860, 300, 270);
+  drawFan(ctx, game.hands[PLAYERS.indexOf(WEST)].length, -60, 300, 90);
 };
 
 const playableCards = function(game) {
