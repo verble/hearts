@@ -24,6 +24,11 @@ const CLUBS = "♣";
 const RANKS = ["2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A"];
 const SUITS = [HEARTS, SPADES, DIAMONDS, CLUBS];
 
+// game states
+const NORMAL = "normal"; // waiting on the next move
+const TRICK_END = "trick_end"; // interface paused until user clicks
+const GAME_OVER = "game_over"; // show score
+
 const Card = function(rank, suit) {
   this.rank = rank;
   this.suit = suit;
@@ -236,6 +241,7 @@ const makeGame = function() {
     turn: starter,
     tricks: [],
     currentTrick: [],
+    state: NORMAL,
 
     currentHand: function() {
       return this.hands[PLAYERS.indexOf(this.turn)];
@@ -430,6 +436,19 @@ const score = function(tricks) {
 };
 
 const advance = function(game, selected) {
+
+  switch (game.state) {
+    case NORMAL:
+      break;
+    case TRICK_END:
+      game.state = NORMAL;
+      // reset current trick
+      game.currentTrick = [];
+      break;
+    case GAME_OVER:
+      return;
+  }
+
   let cardToPlay = null;
   const ps = playableCards(game);
 
@@ -464,13 +483,23 @@ const advance = function(game, selected) {
 
   // is round over?
   if (game.currentTrick.length === 4) {
-    // yes, winner of trick is next to play
+    // need to save for pausing logic
+    const currentPlayer = game.turn;
+
+    // winner of trick is next to play
     game.turn = trickWinner(game.currentTrick);
     console.log(game.turn + " takes the trick");
 
-    // reset current trick
+    // pause if last card played was not the user's card
+    if (currentPlayer != SOUTH) {
+      game.state = TRICK_END;
+    } else {
+      // reset current trick
+      game.currentTrick = [];
+    }
+
+    // save trick
     game.tricks.push(game.currentTrick);
-    game.currentTrick = [];
   } else {
     // no, play continues clockwise
     let i = PLAYERS.indexOf(game.turn);
@@ -484,6 +513,7 @@ const advance = function(game, selected) {
 
   // is game over?
   if (game.hands.every(hand => hand.length === 0)) {
+    game.state = GAME_OVER;
     console.log("game over");
     console.log(score(game.tricks));
   }
