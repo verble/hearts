@@ -309,26 +309,27 @@ const drawTrick = function(ctx, trick) {
   const centerY = CANVAS_HEIGHT / 2;
   const centerMargin = 10;
 
-  const opts = {};
-  opts[NORTH] = {
+  const opts = {
+    [NORTH]: {
       x: centerX - (CARD_WIDTH / 2),
       y: centerY - CARD_HEIGHT - centerMargin,
       orientation: VERTICAL
-  };
-  opts[EAST] = {
-      x: centerX + centerMargin,
+    },
+    [EAST]: {
+        x: centerX + centerMargin,
+        y: centerY - (CARD_WIDTH / 2),
+        orientation: HORIZONTAL
+    },
+    [SOUTH]:  {
+      x: centerX - (CARD_WIDTH / 2),
+      y: centerY + centerMargin,
+      orientation: VERTICAL
+    },
+    [WEST]: {
+      x: centerX - CARD_HEIGHT - centerMargin,
       y: centerY - (CARD_WIDTH / 2),
       orientation: HORIZONTAL
-  };
-  opts[SOUTH] = {
-    x: centerX - (CARD_WIDTH / 2),
-    y: centerY + centerMargin,
-    orientation: VERTICAL
-  };
-  opts[WEST] = {
-    x: centerX - CARD_HEIGHT - centerMargin,
-    y: centerY - (CARD_WIDTH / 2),
-    orientation: HORIZONTAL
+    }
   };
 
   for (let i = 0; i < trick.length; i++) {
