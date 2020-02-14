@@ -238,6 +238,71 @@ Game.prototype.currentHand = function() {
   return this.hands[PLAYERS.indexOf(this.turn)];
 };
 
+Game.prototype.previousTrick = function() {
+  return this.tricks[this.tricks.length - 1];
+};
+
+Game.prototype.isStartOfGame = function() {
+  return this.tricks.length === 0 && this.currentTrick.length === 0;
+};
+
+Game.prototype.isStartOfTrick = function() {
+  return this.currentTrick.length === 0;
+};
+
+Game.prototype.heartsBroken = function() {
+  let previousPlays = this.currentTrick.concat(this.tricks.flat());
+  let previousCards = previousPlays.map(play => play.card);
+  let firstHeart = previousCards.find(card => card.suit === HEARTS);
+
+  return firstHeart != undefined;
+};
+
+Game.prototype.playableCards = function() {
+  if (this.isStartOfGame()) {
+    return [TWO_CLUBS];
+  }
+
+  if (this.isStartOfTrick() && !this.heartsBroken()) {
+    // can play anything except hearts
+    return this.currentHand().filter(card => card.suit != HEARTS);
+  } else if (this.isStartOfTrick()) {
+    // can play anything
+    return this.currentHand().slice(0);
+  } else {
+    // if not start of trick, can we follow suit?
+    const leadingSuit = this.currentTrick[0].card.suit;
+    const matchingCards = this.currentHand()
+      .filter(card => card.suit === leadingSuit);
+
+    if (matchingCards.length != 0) {
+      // yes, must follow suit
+      return matchingCards;
+    } else {
+      // no, we can play anything
+      return this.currentHand().slice(0);
+    }
+  }
+};
+
+Game.prototype.canPlay = function(selected) {
+  return this.playableCards().findIndex(card => card.eq(selected)) != -1;
+};
+
+Game.prototype.nextClockwise = function() {
+  let i = PLAYERS.indexOf(this.turn);
+  if (i == PLAYERS.length - 1) {
+    i = 0;
+  } else {
+    i++;
+  }
+  return PLAYERS[i];
+};
+
+Game.prototype.isOver = function() {
+  return this.hands.every(hand => hand.length === 0);
+};
+
 const drawTrick = function(ctx, trick) {
 
   const centerX = CANVAS_WIDTH / 2;
@@ -336,49 +401,6 @@ const draw = function(ctx, game) {
   drawFan(ctx, game.hands[PLAYERS.indexOf(WEST)].length, -60, 300, 90);
 };
 
-const playableCards = function(game) {
-  // is this the start of the game?
-  const isStartOfGame =
-    game.tricks.length === 0 && game.currentTrick.length === 0;
-  if (isStartOfGame) {
-    // yes, we have to play the two of clubs
-    return [TWO_CLUBS];
-  }
-
-  // is this the start of the trick?
-  const isStartOfTrick = game.currentTrick.length === 0;
-
-  // have hearts been broken?
-  const heartsBroken = function() {
-    let previousPlays = game.currentTrick.concat(game.tricks.flat());
-    let previousCards = previousPlays.map(play => play.card);
-    let firstHeart = previousCards.find(card => card.suit === HEARTS);
-
-    return firstHeart != undefined;
-  }();
-
-  if (isStartOfTrick && !heartsBroken) {
-    // can play anything except hearts
-    return game.currentHand().filter(card => card.suit != HEARTS);
-  } else if (isStartOfTrick) {
-    // can play anything
-    return game.currentHand().slice(0);
-  }
-
-  // if not start of trick, can we follow suit?
-  const leadingSuit = game.currentTrick[0].card.suit;
-  const matchingCards =
-    game.currentHand().filter(card => card.suit === leadingSuit);
-
-  if (matchingCards.length != 0) {
-    // yes, must follow suit
-    return matchingCards;
-  } else {
-    // no, we can play anything
-    return game.currentHand().slice(0);
-  }
-};
-
 const trickWinner = function(trick) {
   const leadingSuit = trick[0].card.suit;
   let winningPlayIx = 0;
@@ -425,86 +447,70 @@ const score = function(tricks) {
 };
 
 const advance = function(game, selected) {
-
-  switch (game.state) {
-    case NORMAL:
-      break;
-    case TRICK_END:
-      game.state = NORMAL;
-      // reset current trick
-      game.currentTrick = [];
-      break;
-    case GAME_OVER:
+  if (game.state === TRICK_END) {
+    if (game.isOver()) {
+      game.state = GAME_OVER;
+      console.log("game over");
+      console.log(score(game.tricks));
       return;
+    } else {
+      // don't update this iteration
+      game.state = NORMAL;
+      return;
+    }
+  } else if (game.state === GAME_OVER) {
+    // do nothing
+    return;
   }
 
   let cardToPlay = null;
-  const ps = playableCards(game);
-
   // is it the player's turn?
   if (game.turn == SOUTH) {
-    // did the player select a card?
+    // yes, did the player select a card?
     if (selected === undefined) {
-      // do nothing
+      // no, do nothing
       return;
-    }
-
-    // is player's choice allowed?
-    if (ps.findIndex(card => card.eq(selected)) != -1) {
+    } else if (game.canPlay(selected)) {
+      // yes, play this card
       cardToPlay = selected;
     } else {
-      // do nothing
+      // illegal play, do nothing
       return;
     }
   } else {
-    // play a random (allowed) card
-    cardToPlay = pick(ps);
+    // no, have the computer play a random legal card
+    cardToPlay = pick(game.playableCards());
   }
 
-  const i = game.currentHand().findIndex(card => card.eq(cardToPlay));
-
   console.log(game.turn + " played " + cardToPlay.rank + cardToPlay.suit);
+
+  // add move to current trick
   game.currentTrick.push({
     card: cardToPlay,
     player: game.turn
   });
-  game.currentHand().splice(i, 1);
+  // remove card from current hand
+  const ix = game.currentHand().findIndex(card => card.eq(cardToPlay));
+  game.currentHand().splice(ix, 1);
 
   // is round over?
   if (game.currentTrick.length === 4) {
-    // need to save for pausing logic
-    const currentPlayer = game.turn;
-
     // winner of trick is next to play
     game.turn = trickWinner(game.currentTrick);
     console.log(game.turn + " takes the trick");
 
-    // pause if last card played was not the user's card
-    if (currentPlayer != SOUTH) {
-      game.state = TRICK_END;
-    } else {
-      // reset current trick
-      game.currentTrick = [];
-    }
-
-    // save trick
+    // save and reset
     game.tricks.push(game.currentTrick);
+    game.currentTrick = [];
+
+    // did a computer end the last trick?
+    if (game.previousTrick()[3] != SOUTH) {
+      // need to pause so user can see play
+      game.state = TRICK_END;
+    }
   } else {
     // no, play continues clockwise
-    let i = PLAYERS.indexOf(game.turn);
-    if (i == PLAYERS.length - 1) {
-      i = 0;
-    } else {
-      i++;
-    }
-    game.turn = PLAYERS[i];
-  }
-
-  // is game over?
-  if (game.hands.every(hand => hand.length === 0)) {
-    game.state = GAME_OVER;
-    console.log("game over");
-    console.log(score(game.tricks));
+    game.turn = game.nextClockwise();
   }
 };
 
