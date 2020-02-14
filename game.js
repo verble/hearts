@@ -224,18 +224,11 @@ const Game = function() {
   this.hands = makeHands();
 
   // who has the two of clubs?
-  const starter = (() => {
-    for (let i = 0; i < 4; i++) {
-      let hasTwoOfClubs = this.hands[i].find(function(card) {
-        return card.rank === "2" && card.suit === CLUBS;
-      });
-      if (hasTwoOfClubs != undefined) {
-        return PLAYERS[i];
-      }
-    }
-  })();
+  const starterIx = this.hands.findIndex(hand =>
+    hand.findIndex(card => card.eq(TWO_CLUBS)) != -1
+  );
 
-  this.turn = starter;
+  this.turn = PLAYERS[starterIx];
   this.tricks = [];
   this.currentTrick = [];
   this.state = NORMAL;
