@@ -10,6 +10,10 @@ const BORDER_SIZE = 5;
 const VERTICAL = "vertical";
 const HORIZONTAL = "horizontal";
 
+const LEFT = "left";
+const RIGHT = "right";
+const CENTER = "center";
+
 const NORTH = "north";
 const EAST = "east";
 const SOUTH = "south";
@@ -391,6 +395,64 @@ const drawFan = function(ctx, numCards, x, y, deg) {
   ctx.restore();
 };
 
+// x and y refer to the top-left corner
+const drawRoundedBox = function(ctx, x, y, width, height, radius) {
+
+  // midpoint of each edge
+  const north = { x: x + width / 2, y: y              };
+  const east  = { x: x + width,     y: y + height / 2 };
+  const south = { x: x + width / 2, y: y + height     };
+  const west  = { x: x,             y: y + height / 2 };
+
+  // corners
+  const northEast = { x: x + width, y: y          };
+  const southEast = { x: x + width, y: y + height };
+  const southWest = { x: x,         y: y + height };
+  const northWest = { x: x,         y: y          };
+
+  ctx.beginPath();
+  ctx.moveTo(north.x, north.y);
+  ctx.arcTo(northEast.x, northEast.y, east.x, east.y, radius);
+  ctx.arcTo(southEast.x, southEast.y, south.x, south.y, radius);
+  ctx.arcTo(southWest.x, southWest.y, west.x, west.y, radius);
+  ctx.arcTo(northWest.x, northWest.y, north.x, north.y, radius);
+  ctx.fill();
+};
+
+const drawLabel = function(ctx, x, y, fontSize, align, text) {
+  ctx.font = fontSize + "px Verdana";
+  ctx.textBaseline = "middle";
+
+  const cornerRadius = 5;
+  const margin = 6;
+  const textX = x + margin;
+  const textY = y + margin + fontSize / 2;
+  const textWidth = ctx.measureText(text).width + margin * 2;
+
+  ctx.save();
+  if (align === CENTER) {
+    ctx.translate(-textWidth / 2, 0);
+  } else if (align === RIGHT) {
+    ctx.translate(-textWidth, 0);
+  } else {
+    // no adjustment needed
+  }
+
+  ctx.fillStyle = "#ab0b00";
+  drawRoundedBox(ctx, x, y, textWidth, fontSize + margin * 2, cornerRadius);
+  ctx.fillStyle = "white";
+  ctx.fillText(text, textX, textY);
+
+  ctx.restore();
+};
+
+const drawNames = function(ctx, names) {
+  // TODO: remove magic number 12 which vertically centers labels
+  drawLabel(ctx, 10, CANVAS_HEIGHT / 2 - 12, 20, LEFT, names[0]);
+  drawLabel(ctx, CANVAS_WIDTH / 2, 10, 20, CENTER, names[1]);
+  drawLabel(ctx, CANVAS_WIDTH - 10, CANVAS_HEIGHT / 2 - 12, 20, RIGHT, names[2]);
+};
+
 const draw = function(ctx, game) {
   drawBackground(ctx);
 
@@ -409,6 +471,8 @@ const draw = function(ctx, game) {
   drawFan(ctx, game.hands[PLAYERS.indexOf(NORTH)].length, 400, -60, 180);
   drawFan(ctx, game.hands[PLAYERS.indexOf(EAST)].length, 860, 300, 270);
   drawFan(ctx, game.hands[PLAYERS.indexOf(WEST)].length, -60, 300, 90);
+
+  drawNames(ctx, ["Katya", "Trixie", "Coco"]);
 };
 
 const trickWinner = function(trick) {
