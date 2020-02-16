@@ -617,11 +617,77 @@ const makeClickHandler = function(ctx, game) {
     advance(game, selected);
     draw(ctx, game);
   };
+}
+
+const ScoreDisplay = function(containingDiv) {
+  const template = `
+    <h1>You Win!</h1>
+    <table>
+      <tbody>
+        <tr id="west">
+          <td class="name"></td>
+          <td class="score"></td>
+        </tr>
+        <tr id="north">
+          <td class="name"></td>
+          <td class="score"></td>
+        </tr>
+        <tr id="east">
+          <td class="name"></td>
+          <td class="score"></td>
+        </tr>
+        <tr id="south">
+          <td class="name"></td>
+          <td class="score"></td>
+        </tr>
+      </tbody>
+    </table>
+    <button type="button">New Game</button>
+  `;
+
+  // stackoverflow.com/questions/16270761
+  this.element = document.createElement("div");
+  this.element.setAttribute("id", "finalScore");
+  this.element.innerHTML = template;
+  containingDiv.appendChild(this.element);
+};
+
+ScoreDisplay.prototype = {
+  set names(value) {
+    this.element.querySelector("#north .name").innerHTML = value[0];
+    this.element.querySelector("#east .name").innerHTML = value[1];
+    this.element.querySelector("#south .name").innerHTML = value[2]
+    this.element.querySelector("#west .name").innerHTML = value[3];
+  },
+
+  set scores(value) {
+    this.element.querySelector("#north .score").innerHTML = value[0];
+    this.element.querySelector("#east .score").innerHTML = value[1];
+    this.element.querySelector("#south .score").innerHTML = value[2]
+    this.element.querySelector("#west .score").innerHTML = value[3];
+  },
+
+  set hidden(value) {
+    if (value) {
+      this.element.style.display = "none";
+    } else {
+      this.element.style.display = "";
+    }
+  },
+
+  set buttonHandler(value) {
+    this.element.querySelector("button").addEventListener("click", value);
+  },
+
+  set winText(value) {
+    this.element.querySelector("h1").innerHTML = value;
+  }
 };
 
 document.addEventListener("DOMContentLoaded", function() {
   const canvas = document.getElementById("game");
   const ctx = canvas.getContext('2d');
+  const display = new ScoreDisplay(canvas.parentElement);
 
   const game = new Game();
   canvas.addEventListener("click", makeClickHandler(ctx, game));
