@@ -506,7 +506,7 @@ const drawNames = function(ctx, names) {
   drawLabel(ctx, CANVAS_WIDTH - 10, CANVAS_HEIGHT / 2 - 12, 20, RIGHT, names[1]);
 };
 
-const draw = function(ctx, game) {
+const draw = function(ctx, scoreDisplay, game) {
   drawBackground(ctx);
 
   const trick = function() {
@@ -526,6 +526,24 @@ const draw = function(ctx, game) {
   drawFan(ctx, game.hands[PLAYERS.indexOf(WEST)].length, -60, 300, 90);
 
   drawNames(ctx, game.names);
+
+  // draw displayScore
+  if (game.state === GAME_OVER) {
+    scoreDisplay.hidden = false;
+    scoreDisplay.names = game.names;
+    scoreDisplay.scores = game.score();
+
+    const winners = game.winners(game.tricks);
+    if (winners.length != 1) {
+      scoreDisplay.winText = "It’s a Tie!";
+    } else if (winners[0] === SOUTH) {
+      scoreDisplay.winText = "You Win!";
+    } else {
+      scoreDisplay.winText = game.names[PLAYERS.indexOf(winners[0])] + " Wins!";
+    }
+  } else {
+    scoreDisplay.hidden = true;
+  }
 };
 
 const advance = function(game, selected) {
@@ -692,13 +710,25 @@ ScoreDisplay.prototype = {
 };
 
 document.addEventListener("DOMContentLoaded", function() {
+  // get DOM references
   const canvas = document.getElementById("game");
   const ctx = canvas.getContext('2d');
   const display = new ScoreDisplay(canvas.parentElement);
 
   const game = new Game();
-  canvas.addEventListener("click", makeClickHandler(ctx, game));
+
+  // attach event listeners
+  canvas.addEventListener("click", event => {
+    // process input
+    const canvasRect = ctx.canvas.getBoundingClientRect();
+    const x = event.clientX - canvasRect.left;
+    const y = event.clientY - canvasRect.top;
+    let selected = getSelectedCard(ctx, game, x, y);
+
+    advance(game, selected);
+    draw(ctx, display, game);
+  });
 
   // initial draw
-  draw(ctx, game);
+  draw(ctx, display, game);
 });
