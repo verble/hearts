@@ -670,6 +670,7 @@ const ScoreDisplay = function(containingDiv) {
   this.element = document.createElement("div");
   this.element.setAttribute("id", "finalScore");
   this.element.innerHTML = template;
+  this.element.style.display = "none";
   containingDiv.appendChild(this.element);
 };
 
