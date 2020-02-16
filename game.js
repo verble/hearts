@@ -366,6 +366,11 @@ Game.prototype.score = function() {
     score[PLAYERS.indexOf(winner)] += points;
   };
 
+  // did anyone shoot the moon?
+  if (score.some(s => s === 26)) {
+    return score.map(s => s === 26 ? 0 : 26);
+  }
+
   return score;
 };
 
