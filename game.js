@@ -236,6 +236,7 @@ const Game = function() {
   this.tricks = [];
   this.currentTrick = [];
   this.state = NORMAL;
+  this.names = ["Trixie", "Coco", "You", "Katya"];
 };
 
 Game.prototype.currentHand = function() {
@@ -448,9 +449,9 @@ const drawLabel = function(ctx, x, y, fontSize, align, text) {
 
 const drawNames = function(ctx, names) {
   // TODO: remove magic number 12 which vertically centers labels
-  drawLabel(ctx, 10, CANVAS_HEIGHT / 2 - 12, 20, LEFT, names[0]);
-  drawLabel(ctx, CANVAS_WIDTH / 2, 10, 20, CENTER, names[1]);
-  drawLabel(ctx, CANVAS_WIDTH - 10, CANVAS_HEIGHT / 2 - 12, 20, RIGHT, names[2]);
+  drawLabel(ctx, 10, CANVAS_HEIGHT / 2 - 12, 20, LEFT, names[3]);
+  drawLabel(ctx, CANVAS_WIDTH / 2, 10, 20, CENTER, names[0]);
+  drawLabel(ctx, CANVAS_WIDTH - 10, CANVAS_HEIGHT / 2 - 12, 20, RIGHT, names[1]);
 };
 
 const draw = function(ctx, game) {
@@ -472,7 +473,7 @@ const draw = function(ctx, game) {
   drawFan(ctx, game.hands[PLAYERS.indexOf(EAST)].length, 860, 300, 270);
   drawFan(ctx, game.hands[PLAYERS.indexOf(WEST)].length, -60, 300, 90);
 
-  drawNames(ctx, ["Katya", "Trixie", "Coco"]);
+  drawNames(ctx, game.names);
 };
 
 const trickWinner = function(trick) {
