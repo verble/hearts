@@ -550,8 +550,6 @@ const advance = function(game, selected) {
   if (game.state === TRICK_END) {
     if (game.isOver()) {
       game.state = GAME_OVER;
-      console.log("game over");
-      console.log(game.score());
       return;
     } else {
       // don't update this iteration
@@ -582,8 +580,6 @@ const advance = function(game, selected) {
     cardToPlay = pick(game.playableCards());
   }
 
-  console.log(game.turn + " played " + cardToPlay.rank + cardToPlay.suit);
-
   // add move to current trick
   game.currentTrick.push({
     card: cardToPlay,
@@ -597,7 +593,6 @@ const advance = function(game, selected) {
   if (game.currentTrick.length === 4) {
     // winner of trick is next to play
     game.turn = trickWinner(game.currentTrick);
-    console.log(game.turn + " takes the trick");
 
     // save and reset
     game.tricks.push(game.currentTrick);
