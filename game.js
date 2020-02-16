@@ -626,19 +626,6 @@ const getSelectedCard = function(ctx, game, x, y) {
   return selected;
 };
 
-const makeClickHandler = function(ctx, game) {
-  return function(event) {
-    // process input
-    const canvasRect = ctx.canvas.getBoundingClientRect();
-    const x = event.clientX - canvasRect.left;
-    const y = event.clientY - canvasRect.top;
-    let selected = getSelectedCard(ctx, game, x, y);
-
-    advance(game, selected);
-    draw(ctx, game);
-  };
-}
-
 const ScoreDisplay = function(containingDiv) {
   const template = `
     <h1>You Win!</h1>
