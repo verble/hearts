@@ -33,6 +33,10 @@ const NORMAL = "normal"; // waiting on the next move
 const TRICK_END = "trick_end"; // interface paused until user clicks
 const GAME_OVER = "game_over"; // show score
 
+// reducer actions
+const NEW_GAME = "new_game";
+const CLICK = "click";
+
 const Card = function(rank, suit) {
   this.rank = rank;
   this.suit = suit;
@@ -563,47 +567,49 @@ const draw = function(ctx, scoreDisplay, game) {
   }
 };
 
-const advance = function(game, selected) {
+const advance = function(game, action) {
   if (game.state === TRICK_END) {
     if (game.isOver()) {
       game.state = GAME_OVER;
-      return;
+      return game;
     } else {
       // don't update this iteration
       game.state = NORMAL;
-      return;
+      return game;
     }
   } else if (game.state === GAME_OVER) {
-    // do nothing
-    return;
+    if (action.type === NEW_GAME) {
+      return new Game();
+    } else {
+      // do nothing
+      return game;
+    }
   }
 
-  let cardToPlay = null;
+  let selected = null;
   // is it the player's turn?
   if (game.turn == SOUTH) {
     // yes, did the player select a card?
+    selected = game.getSelectedCard(action.x, action.y);
     if (selected === undefined) {
       // no, do nothing
-      return;
-    } else if (game.canPlay(selected)) {
-      // yes, play this card
-      cardToPlay = selected;
-    } else {
+      return game;
+    } else if (!game.canPlay(selected)) {
       // illegal play, do nothing
-      return;
+      return game;
     }
   } else {
     // no, have the computer play a random legal card
-    cardToPlay = pick(game.playableCards());
+    selected = pick(game.playableCards());
   }
 
   // add move to current trick
   game.currentTrick.push({
-    card: cardToPlay,
+    card: selected,
     player: game.turn
   });
   // remove card from current hand
-  const ix = game.currentHand().findIndex(card => card.eq(cardToPlay));
+  const ix = game.currentHand().findIndex(card => card.eq(selected));
   game.currentHand().splice(ix, 1);
 
   // is round over?
@@ -624,6 +630,8 @@ const advance = function(game, selected) {
     // no, play continues clockwise
     game.turn = game.nextClockwise();
   }
+
+  return game;
 };
 
 const ScoreDisplay = function(containingDiv) {
@@ -691,26 +699,46 @@ ScoreDisplay.prototype = {
   }
 };
 
+const Application = function(state, reducer, drawer) {
+  this.state = state;
+  this.reducer = reducer;
+  this.drawer = drawer;
+};
+
+Application.prototype.draw = function() {
+  this.drawer(this.state);
+};
+
+Application.prototype.advance = function(action) {
+  this.state = this.reducer(this.state, action);
+  this.draw();
+}
+
 document.addEventListener("DOMContentLoaded", function() {
   // get DOM references
   const canvas = document.getElementById("game");
   const ctx = canvas.getContext('2d');
   const display = new ScoreDisplay(canvas.parentElement);
 
-  const game = new Game();
+  const drawer = (state) => {
+    draw(ctx, display, state);
+  };
 
-  // attach event listeners
+  const app = new Application(new Game(), advance, drawer);
+
   canvas.addEventListener("click", event => {
-    // process input
-    const canvasRect = ctx.canvas.getBoundingClientRect();
+    // get (x,y) in canvas coordinate system
+    const canvasRect = canvas.getBoundingClientRect();
     const x = event.clientX - canvasRect.left;
     const y = event.clientY - canvasRect.top;
-    let selected = game.getSelectedCard(x, y);
 
-    advance(game, selected);
-    draw(ctx, display, game);
+    app.advance({ type: CLICK, x, y });
   });
 
+  display.buttonHandler = event => {
+    app.advance({ type: NEW_GAME });
+  };
+
   // initial draw
-  draw(ctx, display, game);
+  app.draw();
 });
