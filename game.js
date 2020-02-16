@@ -120,7 +120,7 @@ BoundingBox.prototype.contains = function(x, y) {
   return inX && inY;
 };
 
-const cardBounds = function(ctx, numCards) {
+const cardBounds = function(numCards) {
   const xOverlapFactor = 2.3;
   const yOverlapFactor = 0.6;
 
@@ -128,8 +128,8 @@ const cardBounds = function(ctx, numCards) {
   const usedSpace = visibleCardWidth * (numCards - 1) + CARD_WIDTH;
 
   // starting values of x and y
-  let x = (ctx.canvas.clientWidth - usedSpace) / 2;
-  const y = ctx.canvas.clientHeight - (yOverlapFactor * CARD_HEIGHT);
+  let x = (CANVAS_WIDTH - usedSpace) / 2;
+  const y = CANVAS_HEIGHT - (yOverlapFactor * CARD_HEIGHT);
 
   const bounds = [];
   for (let i = 0; i < numCards; i++) {
@@ -197,7 +197,7 @@ const drawCard = function(ctx, x, y, card, orientation) {
 };
 
 const drawHand = function(ctx, hand) {
-  const bounds = cardBounds(ctx, hand.length);
+  const bounds = cardBounds(hand.length);
 
   for (let i = 0; i < hand.length; i++) {
     drawCard(ctx, bounds[i].x, bounds[i].y, hand[i], VERTICAL);
@@ -306,6 +306,23 @@ Game.prototype.nextClockwise = function() {
 
 Game.prototype.isOver = function() {
   return this.hands.every(hand => hand.length === 0);
+};
+
+Game.prototype.getSelectedCard = function(x, y) {
+  const playerHand = this.hands[PLAYERS.indexOf(SOUTH)];
+  const bounds = cardBounds(playerHand.length);
+
+  let selected = undefined;
+  // cards with a higher z-index appear later in the array,
+  // so this loop returns the topmost card in the case that
+  // the click coordinates are over multiple cards
+  for (let i = 0; i < playerHand.length; i++) {
+    if (bounds[i].contains(x, y)) {
+      selected = playerHand[i];
+    }
+  }
+
+  return selected;
 };
 
 const trickWinner = function(trick) {
@@ -609,23 +626,6 @@ const advance = function(game, selected) {
   }
 };
 
-const getSelectedCard = function(ctx, game, x, y) {
-  const playerHand = game.hands[PLAYERS.indexOf(SOUTH)];
-  const bounds = cardBounds(ctx, playerHand.length);
-
-  let selected = undefined;
-  // cards with a higher z-index appear later in the array,
-  // so this loop returns the topmost card in the case that
-  // the click coordinates are over multiple cards
-  for (let i = 0; i < playerHand.length; i++) {
-    if (bounds[i].contains(x, y)) {
-      selected = playerHand[i];
-    }
-  }
-
-  return selected;
-};
-
 const ScoreDisplay = function(containingDiv) {
   const template = `
     <h1>You Win!</h1>
@@ -705,7 +705,7 @@ document.addEventListener("DOMContentLoaded", function() {
     const canvasRect = ctx.canvas.getBoundingClientRect();
     const x = event.clientX - canvasRect.left;
     const y = event.clientY - canvasRect.top;
-    let selected = getSelectedCard(ctx, game, x, y);
+    let selected = game.getSelectedCard(x, y);
 
     advance(game, selected);
     draw(ctx, display, game);
