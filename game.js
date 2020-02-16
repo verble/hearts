@@ -308,6 +308,58 @@ Game.prototype.isOver = function() {
   return this.hands.every(hand => hand.length === 0);
 };
 
+const trickWinner = function(trick) {
+  const leadingSuit = trick[0].card.suit;
+  let winningPlayIx = 0;
+
+  for (let i = 1; i < 4; i++) {
+    let nextCard = trick[i].card;
+
+    let followedSuit = leadingSuit === nextCard.suit;
+    let higherRanked =
+      rankCompare(trick[winningPlayIx].card.rank, nextCard.rank) < 0;
+
+    if (followedSuit && higherRanked) {
+      winningPlayIx = i;
+    }
+  }
+
+  return trick[winningPlayIx].player;
+};
+
+Game.prototype.score = function() {
+  const score = [0, 0, 0, 0];
+
+  for (let i = 0; i < this.tricks.length; i++) {
+    const winner = trickWinner(this.tricks[i]);
+    const points = this.tricks[i].reduce(function(sum, play) {
+      if (play.card.suit == HEARTS) {
+        return sum + 1;
+      } else if (play.card.eq(QUEEN_SPADES)) {
+        return sum + 13;
+      } else {
+        return sum
+      }
+    }, 0);
+
+    score[PLAYERS.indexOf(winner)] += points;
+  };
+
+  return score;
+};
+
+Game.prototype.winners = function() {
+  const score = this.score();
+  const lowScore = Math.min.apply(null, score);
+  const winners = [];
+  for (let i = 0; i < PLAYERS.length; i++) {
+    if (score[i] === lowScore) {
+      winners.push(PLAYERS[i]);
+    }
+  }
+  return winners;
+};
+
 const drawTrick = function(ctx, trick) {
 
   const centerX = CANVAS_WIDTH / 2;
@@ -476,57 +528,12 @@ const draw = function(ctx, game) {
   drawNames(ctx, game.names);
 };
 
-const trickWinner = function(trick) {
-  const leadingSuit = trick[0].card.suit;
-  let winningPlayIx = 0;
-
-  for (let i = 1; i < 4; i++) {
-    let nextCard = trick[i].card;
-
-    let followedSuit = leadingSuit === nextCard.suit;
-    let higherRanked =
-      rankCompare(trick[winningPlayIx].card.rank, nextCard.rank) < 0;
-
-    if (followedSuit && higherRanked) {
-      winningPlayIx = i;
-    }
-  }
-
-  return trick[winningPlayIx].player;
-};
-
-const score = function(tricks) {
-  const score = {
-    [NORTH]: 0,
-    [SOUTH]: 0,
-    [EAST]: 0,
-    [WEST]: 0
-  };
-
-  for (let i = 0; i < tricks.length; i++) {
-    const winner = trickWinner(tricks[i]);
-    const points = tricks[i].reduce(function(sum, play) {
-      if (play.card.suit == HEARTS) {
-        return sum + 1;
-      } else if (play.card.eq(QUEEN_SPADES)) {
-        return sum + 13;
-      } else {
-        return sum
-      }
-    }, 0);
-
-    score[winner] += points;
-  };
-
-  return score;
-};
-
 const advance = function(game, selected) {
   if (game.state === TRICK_END) {
     if (game.isOver()) {
       game.state = GAME_OVER;
       console.log("game over");
-      console.log(score(game.tricks));
+      console.log(game.score());
       return;
     } else {
       // don't update this iteration
