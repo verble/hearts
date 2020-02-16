@@ -494,6 +494,8 @@ const drawRoundedBox = function(ctx, x, y, width, height, radius) {
 };
 
 const drawLabel = function(ctx, x, y, fontSize, align, text) {
+  ctx.save();
+
   ctx.font = fontSize + "px Verdana";
   ctx.textBaseline = "middle";
 
@@ -503,7 +505,6 @@ const drawLabel = function(ctx, x, y, fontSize, align, text) {
   const textY = y + margin + fontSize / 2;
   const textWidth = ctx.measureText(text).width + margin * 2;
 
-  ctx.save();
   if (align === CENTER) {
     ctx.translate(-textWidth / 2, 0);
   } else if (align === RIGHT) {
