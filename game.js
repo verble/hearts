@@ -209,7 +209,14 @@ const drawHand = function(ctx, hand) {
 };
 
 const drawBackground = function(ctx) {
-  ctx.fillStyle = "green";
+  const x = CANVAS_WIDTH / 2;
+  const y = CANVAS_HEIGHT / 2;
+  const gradient = ctx.createRadialGradient(x, y, 150, x, y, 700);
+
+  gradient.addColorStop(0, "#007415");
+  gradient.addColorStop(1, "#115200");
+
+  ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 };
 
