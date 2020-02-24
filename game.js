@@ -111,6 +111,12 @@ const shuffle = function(array) {
   }
 };
 
+const randomDeck = function() {
+  const deck = [...NEW_DECK];
+  shuffle(deck);
+  return deck;
+};
+
 const BoundingBox = function(x, y, width, height) {
   this.x = x;
   this.y = y;
@@ -220,10 +226,7 @@ const drawBackground = function(ctx) {
   ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 };
 
-const makeHands = function() {
-  const deck = [...NEW_DECK];
-  shuffle(deck);
-
+const makeHands = function(deck) {
   const hands = [];
   const handSize = deck.length / 4;
   for (let i = 0; i < 4; i++) {
@@ -235,8 +238,8 @@ const makeHands = function() {
   return hands;
 };
 
-const Game = function() {
-  this.hands = makeHands();
+const Game = function(deck = randomDeck()) {
+  this.hands = makeHands(deck);
 
   // who has the two of clubs?
   const starterIx = this.hands.findIndex(hand =>
