@@ -833,3 +833,5 @@ document.addEventListener("DOMContentLoaded", function() {
   // initial draw
   app.draw();
 });
+
+export { newGame, Card, NEW_DECK, TWO_CLUBS, currentHand };
