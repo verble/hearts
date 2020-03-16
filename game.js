@@ -30,12 +30,13 @@ const SUITS = [HEARTS, SPADES, DIAMONDS, CLUBS];
 
 // game states
 const NORMAL = "normal"; // waiting on the next move
-const TRICK_END = "trick_end"; // interface paused until user clicks
-const GAME_OVER = "game_over"; // show score
+const PAUSED = "paused"; // give user time to see cards played
 
 // reducer actions
 const NEW_GAME = "new_game";
-const CLICK = "click";
+const RANDOM = "random";
+const CONTINUE = "continue";
+const PLAY = "play";
 
 const Card = function(rank, suit) {
   this.rank = rank;
@@ -238,60 +239,62 @@ const makeHands = function(deck) {
   return hands;
 };
 
-const Game = function(deck = randomDeck()) {
-  this.hands = makeHands(deck);
+const newGame = function(deck = randomDeck()) {
+  const hands = makeHands(deck);
 
   // who has the two of clubs?
-  const starterIx = this.hands.findIndex(hand =>
+  const starterIx = hands.findIndex(hand =>
     hand.findIndex(card => card.eq(TWO_CLUBS)) != -1
   );
 
-  this.turn = PLAYERS[starterIx];
-  this.tricks = [];
-  this.currentTrick = [];
-  this.state = NORMAL;
-  this.names = ["Trixie", "Coco", "You", "Katya"];
+  return {
+    turn: PLAYERS[starterIx],
+    hands: hands,
+    tricks: [],
+    currentTrick: [],
+    names: ["Trixie", "Coco", "You", "Katya"]
+  };
 };
 
-Game.prototype.currentHand = function() {
-  return this.hands[PLAYERS.indexOf(this.turn)];
+const currentHand = function(game) {
+  return game.hands[PLAYERS.indexOf(game.turn)];
 };
 
-Game.prototype.previousTrick = function() {
-  return this.tricks[this.tricks.length - 1];
+const previousTrick = function(game) {
+  return game.tricks[game.tricks.length - 1];
 };
 
-Game.prototype.isStartOfGame = function() {
-  return this.tricks.length === 0 && this.currentTrick.length === 0;
+const isStartOfGame = function(game) {
+  return game.tricks.length === 0 && game.currentTrick.length === 0;
 };
 
-Game.prototype.isStartOfTrick = function() {
-  return this.currentTrick.length === 0;
+const isStartOfTrick = function(game) {
+  return game.currentTrick.length === 0;
 };
 
-Game.prototype.heartsBroken = function() {
-  let previousPlays = this.currentTrick.concat(this.tricks.flat());
+const heartsBroken = function(game) {
+  let previousPlays = game.currentTrick.concat(game.tricks.flat());
   let previousCards = previousPlays.map(play => play.card);
   let firstHeart = previousCards.find(card => card.suit === HEARTS);
 
   return firstHeart != undefined;
 };
 
-Game.prototype.playableCards = function() {
-  if (this.isStartOfGame()) {
+const playableCards = function(game) {
+  if (isStartOfGame(game)) {
     return [TWO_CLUBS];
   }
 
-  if (this.isStartOfTrick() && !this.heartsBroken()) {
+  if (isStartOfTrick(game) && !heartsBroken(game)) {
     // can play anything except hearts
-    return this.currentHand().filter(card => card.suit != HEARTS);
-  } else if (this.isStartOfTrick()) {
+    return currentHand(game).filter(card => card.suit != HEARTS);
+  } else if (isStartOfTrick(game)) {
     // can play anything
-    return this.currentHand().slice(0);
+    return currentHand(game).slice(0);
   } else {
     // if not start of trick, can we follow suit?
-    const leadingSuit = this.currentTrick[0].card.suit;
-    const matchingCards = this.currentHand()
+    const leadingSuit = game.currentTrick[0].card.suit;
+    const matchingCards = currentHand(game)
       .filter(card => card.suit === leadingSuit);
 
     if (matchingCards.length != 0) {
@@ -299,17 +302,17 @@ Game.prototype.playableCards = function() {
       return matchingCards;
     } else {
       // no, we can play anything
-      return this.currentHand().slice(0);
+      return currentHand(game).slice(0);
     }
   }
 };
 
-Game.prototype.canPlay = function(selected) {
-  return this.playableCards().findIndex(card => card.eq(selected)) != -1;
+const canPlay = function(game, selected) {
+  return playableCards(game).findIndex(card => card.eq(selected)) != -1;
 };
 
-Game.prototype.nextClockwise = function() {
-  let i = PLAYERS.indexOf(this.turn);
+const nextClockwise = function(game) {
+  let i = PLAYERS.indexOf(game.turn);
   if (i == PLAYERS.length - 1) {
     i = 0;
   } else {
@@ -318,12 +321,12 @@ Game.prototype.nextClockwise = function() {
   return PLAYERS[i];
 };
 
-Game.prototype.isOver = function() {
-  return this.hands.every(hand => hand.length === 0);
+const isOver = function(game) {
+  return game.hands.every(hand => hand.length === 0);
 };
 
-Game.prototype.getSelectedCard = function(x, y) {
-  const playerHand = this.hands[PLAYERS.indexOf(SOUTH)];
+const getSelectedCard = function(game, x, y) {
+  const playerHand = game.hands[PLAYERS.indexOf(SOUTH)];
   const bounds = cardBounds(playerHand.length);
 
   let selected = undefined;
@@ -358,12 +361,12 @@ const trickWinner = function(trick) {
   return trick[winningPlayIx].player;
 };
 
-Game.prototype.score = function() {
+const score = function(game) {
   const score = [0, 0, 0, 0];
 
-  for (let i = 0; i < this.tricks.length; i++) {
-    const winner = trickWinner(this.tricks[i]);
-    const points = this.tricks[i].reduce(function(sum, play) {
+  for (let i = 0; i < game.tricks.length; i++) {
+    const winner = trickWinner(game.tricks[i]);
+    const points = game.tricks[i].reduce(function(sum, play) {
       if (play.card.suit == HEARTS) {
         return sum + 1;
       } else if (play.card.eq(QUEEN_SPADES)) {
@@ -384,12 +387,12 @@ Game.prototype.score = function() {
   return score;
 };
 
-Game.prototype.winners = function() {
-  const score = this.score();
-  const lowScore = Math.min.apply(null, score);
+const winners = function(game) {
+  const s = score(game);
+  const lowScore = Math.min.apply(null, s);
   const winners = [];
   for (let i = 0; i < PLAYERS.length; i++) {
-    if (score[i] === lowScore) {
+    if (s[i] === lowScore) {
       winners.push(PLAYERS[i]);
     }
   }
@@ -543,111 +546,172 @@ const drawNames = function(ctx, names) {
   drawLabel(ctx, CANVAS_WIDTH - 10, CANVAS_HEIGHT / 2 - 12, 20, RIGHT, names[1]);
 };
 
-const draw = function(ctx, scoreDisplay, game) {
+const draw = function(ctx, scoreDisplay, state) {
   drawBackground(ctx);
 
+  console.log(state);
+
   const trick = function() {
-    if (game.state === TRICK_END) {
-      return game.tricks[game.tricks.length - 1];
+    if (state.uiState === PAUSED) {
+      return state.game.tricks[state.game.tricks.length - 1];
     } else {
-      return game.currentTrick;
+      return state.game.currentTrick;
     }
   }();
   drawTrick(ctx, trick);
 
-  drawHand(ctx, game.hands[PLAYERS.indexOf(SOUTH)]);
+  drawHand(ctx, state.game.hands[PLAYERS.indexOf(SOUTH)]);
 
   // draw computer hands
-  drawFan(ctx, game.hands[PLAYERS.indexOf(NORTH)].length, 400, -60, 180);
-  drawFan(ctx, game.hands[PLAYERS.indexOf(EAST)].length, 860, 300, 270);
-  drawFan(ctx, game.hands[PLAYERS.indexOf(WEST)].length, -60, 300, 90);
+  drawFan(ctx, state.game.hands[PLAYERS.indexOf(NORTH)].length, 400, -60, 180);
+  drawFan(ctx, state.game.hands[PLAYERS.indexOf(EAST)].length, 860, 300, 270);
+  drawFan(ctx, state.game.hands[PLAYERS.indexOf(WEST)].length, -60, 300, 90);
 
-  drawNames(ctx, game.names);
+  drawNames(ctx, state.game.names);
 
   // draw displayScore
-  if (game.state === GAME_OVER) {
+  if (isOver(state.game) && state.uiState != PAUSED) {
     scoreDisplay.hidden = false;
-    scoreDisplay.names = game.names;
-    scoreDisplay.scores = game.score();
+    scoreDisplay.names = state.game.names;
+    scoreDisplay.scores = score(state.game);
 
-    const winners = game.winners(game.tricks);
-    if (winners.length != 1) {
+    const ws = winners(state.game);
+    if (ws.length != 1) {
       scoreDisplay.winText = "It’s a Tie!";
-    } else if (winners[0] === SOUTH) {
+    } else if (ws[0] === SOUTH) {
       scoreDisplay.winText = "You Win!";
     } else {
-      scoreDisplay.winText = game.names[PLAYERS.indexOf(winners[0])] + " Wins!";
+      scoreDisplay.winText =
+        state.game.names[PLAYERS.indexOf(ws[0])] + " Wins!";
     }
   } else {
     scoreDisplay.hidden = true;
   }
 };
 
-const advance = function(game, action) {
-  if (game.state === TRICK_END) {
-    if (game.isOver()) {
-      game.state = GAME_OVER;
-      return game;
-    } else {
-      // don't update this iteration
-      game.state = NORMAL;
-      return game;
-    }
-  } else if (game.state === GAME_OVER) {
-    if (action.type === NEW_GAME) {
-      return new Game();
-    } else {
-      // do nothing
-      return game;
-    }
-  }
-
-  let selected = null;
-  // is it the player's turn?
-  if (game.turn == SOUTH) {
-    // yes, did the player select a card?
-    selected = game.getSelectedCard(action.x, action.y);
-    if (selected === undefined) {
-      // no, do nothing
-      return game;
-    } else if (!game.canPlay(selected)) {
-      // illegal play, do nothing
-      return game;
-    }
-  } else {
-    // no, have the computer play a random legal card
-    selected = pick(game.playableCards());
-  }
+// TODO: bad moves are ignored
+// don't care whose turn
+const play = function(game, selected) {
 
   // add move to current trick
-  game.currentTrick.push({
-    card: selected,
-    player: game.turn
-  });
+  let updatedTrick = [
+    ...game.currentTrick,
+    { card: selected, player: game.turn }
+  ];
+
   // remove card from current hand
-  const ix = game.currentHand().findIndex(card => card.eq(selected));
-  game.currentHand().splice(ix, 1);
+  const removeIx = currentHand(game).findIndex(card => card.eq(selected));
+  let updatedHands = game.hands.map((hand, handsIx) => {
+    if (handsIx !== PLAYERS.indexOf(game.turn)) {
+      return hand;
+    } else {
+      return hand.filter((card, cardIx) => cardIx !== removeIx);
+    }
+  });
 
   // is round over?
-  if (game.currentTrick.length === 4) {
+  if (updatedTrick.length === 4) {
     // winner of trick is next to play
-    game.turn = trickWinner(game.currentTrick);
+    let nextPlayer = trickWinner(updatedTrick);
 
-    // save and reset
-    game.tricks.push(game.currentTrick);
-    game.currentTrick = [];
+    return {
+      ...game,
+      currentTrick: [],
+      hands: updatedHands,
+      tricks: [...game.tricks, updatedTrick],
+      turn: nextPlayer
+    };
 
-    // did a computer end the last trick?
-    if (game.previousTrick()[3] != SOUTH) {
-      // need to pause so user can see play
-      game.state = TRICK_END;
-    }
   } else {
     // no, play continues clockwise
-    game.turn = game.nextClockwise();
-  }
+    let nextPlayer = nextClockwise(game);
 
-  return game;
+    return {
+      ...game,
+      currentTrick: updatedTrick,
+      hands: updatedHands,
+      turn: nextPlayer
+    };
+  }
+};
+
+const computerTurn = function(state) {
+  let updatedGame = play(state.game, pick(playableCards(state.game)));
+
+  let trickOver = updatedGame.currentTrick.length === 0;
+  let computerPlayedLast =
+    previousTrick(updatedGame) !== undefined
+    && previousTrick(updatedGame)[3] !== SOUTH;
+
+  if (trickOver && computerPlayedLast) {
+    // need to pause so user can see play
+    return {
+      ...state,
+      uiState: PAUSED,
+      game: updatedGame
+    };
+  } else {
+    return {
+      ...state,
+      game: updatedGame
+    };
+  }
+};
+
+const advance = function(state, action) {
+
+  console.log(action);
+
+  // CONTINUE = next computer player goes or start next trick
+  // PLAY card = play selected card
+  // NEW_GAME = start new game
+  // RANDOM = for testing, current player makes random legal move
+
+  switch (action.type) {
+  case PLAY:
+    if (state.uiState === PAUSED) {
+      return {
+        ...state,
+        uiState: NORMAL
+      };
+    }
+    // is it the player's turn?
+    if (state.game.turn === SOUTH) {
+      // legal move?
+      if (canPlay(state.game, action.card)) {
+        return {
+          ...state,
+          game: play(state.game, action.card)
+        };
+      } else {
+        // illegal, do nothing
+        return state;
+      }
+    } else {
+      // no, have the computer go
+      return computerTurn(state);
+    }
+  case CONTINUE:
+    if (state.uiState === PAUSED) {
+      return {
+        ...state,
+        uiState: NORMAL
+      };
+    } else if (state.game.turn === SOUTH) {
+      return state;
+    } else {
+      return computerTurn(state);
+    }
+  case NEW_GAME:
+    return {
+      game: newGame(),
+      uiState: NORMAL
+    };
+  case RANDOM:
+    return state;
+  default:
+    return state;
+  }
 };
 
 const ScoreDisplay = function(containingDiv) {
@@ -741,7 +805,11 @@ document.addEventListener("DOMContentLoaded", function() {
     draw(ctx, display, state);
   };
 
-  const app = new Application(new Game(), advance, drawer);
+  const state = {
+    game: newGame(),
+    uiState: NORMAL
+  };
+  const app = new Application(state, advance, drawer);
 
   canvas.addEventListener("click", event => {
     // get (x,y) in canvas coordinate system
@@ -749,7 +817,13 @@ document.addEventListener("DOMContentLoaded", function() {
     const x = event.clientX - canvasRect.left;
     const y = event.clientY - canvasRect.top;
 
-    app.advance({ type: CLICK, x, y });
+    // get selected card if any
+    const card = getSelectedCard(app.state.game, x, y);
+    if (card !== undefined) {
+      app.advance({ type: PLAY, card: card });
+    } else {
+      app.advance({ type: CONTINUE });
+    }
   });
 
   display.buttonHandler = event => {
