@@ -795,6 +795,10 @@ Application.prototype.advance = function(action) {
   this.draw();
 }
 
+const newState = function(game = newGame(), uiState = NORMAL) {
+  return { game, uiState };
+};
+
 document.addEventListener("DOMContentLoaded", function() {
   // get DOM references
   const canvas = document.getElementById("game");
@@ -805,10 +809,7 @@ document.addEventListener("DOMContentLoaded", function() {
     draw(ctx, display, state);
   };
 
-  const state = {
-    game: newGame(),
-    uiState: NORMAL
-  };
+  const state = newState();
   const app = new Application(state, advance, drawer);
 
   canvas.addEventListener("click", event => {
