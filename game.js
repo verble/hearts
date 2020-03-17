@@ -835,4 +835,4 @@ document.addEventListener("DOMContentLoaded", function() {
   app.draw();
 });
 
-export { newGame, Card, NEW_DECK, TWO_CLUBS, currentHand };
+export { newGame, Card, NEW_DECK, TWO_CLUBS, currentHand, advance, isOver, RANDOM, newState, score };

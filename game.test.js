@@ -14,6 +14,14 @@ const testGame = (() => {
   return g.newGame(shuffledDeck);
 })();
 
+const finishedGame = (() => {
+  let next = g.newState(game);
+  while (!g.isOver(next.game)) {
+    next = g.advance(next, { type: g.RANDOM });
+  }
+  return next;
+})();
+
 describe("a new game object", () => {
   it("should have 52 cards on initialization", () => {
     const numCards = game.hands.flat().length;
@@ -33,5 +41,12 @@ describe("a new game object", () => {
   it("should start with the holder of the two of clubs", () => {
     let ix = g.currentHand(game).find(card => card.eq(g.TWO_CLUBS));
     expect(ix).not.toBe(undefined);
+  });
+});
+
+describe("A finished round", () => {
+  it("should have 26 or 78 total points", () => {
+    const sum = g.score(finishedGame.game).reduce((a, b) => a + b);
+    expect(sum == 26 || sum == 78).toBeTruthy();
   });
 });
