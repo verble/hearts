@@ -708,7 +708,7 @@ const advance = function(state, action) {
       uiState: NORMAL
     };
   case RANDOM:
-    return state;
+    return computerTurn(state);
   default:
     return state;
   }
