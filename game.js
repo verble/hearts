@@ -55,6 +55,36 @@ Card.prototype.suitColor = function() {
   }
 };
 
+// usage: toCards("H 10 2 C 1") => [10♥, 2♥, 1♣]
+const toCards = function(str) {
+  const tokens = str.split(" ").reverse();
+  const cards = [];
+
+  var suit = HEARTS;
+
+  while (tokens.length > 0) {
+    const token = tokens.pop();
+    switch (token) {
+    case "H":
+      suit = HEARTS;
+      break;
+    case "S":
+      suit = SPADES;
+      break;
+    case "D":
+      suit = DIAMONDS;
+      break;
+    case "C":
+      suit = CLUBS;
+      break;
+    default:
+      cards.push(new Card(token, suit));
+    }
+  }
+
+  return cards;
+}
+
 const TWO_CLUBS = new Card("2", CLUBS);
 const QUEEN_SPADES = new Card("Q", SPADES);
 
@@ -835,4 +865,4 @@ document.addEventListener("DOMContentLoaded", function() {
   app.draw();
 });
 
-export { newGame, Card, NEW_DECK, TWO_CLUBS, currentHand, advance, isOver, RANDOM, newState, score };
+export { newGame, Card, NEW_DECK, TWO_CLUBS, currentHand, advance, isOver, RANDOM, newState, score, toCards, SOUTH, play, WEST, heartsBroken, canPlay };

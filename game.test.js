@@ -14,6 +14,19 @@ const testGame = (() => {
   return g.newGame(shuffledDeck);
 })();
 
+const exampleGame1 = {
+  turn: g.WEST,
+  hands: [
+    g.toCards("H 2 3 4 5 6 7 8 9 10 J K Q C A"),
+    g.toCards("S 2 3 4 5 6 7 8 9 10 J K Q A"),
+    g.toCards("D 2 3 4 5 6 7 8 9 10 J K Q A"),
+    g.toCards("C 2 3 4 5 6 7 8 9 10 J K Q H A"),
+  ],
+  tricks: [],
+  currentTrick: [],
+  names: ["N", "E", "S", "W"]
+};
+
 const finishedGame = (() => {
   let next = g.newState(game);
   while (!g.isOver(next.game)) {
@@ -41,6 +54,16 @@ describe("a new game object", () => {
   it("should start with the holder of the two of clubs", () => {
     let ix = g.currentHand(game).find(card => card.eq(g.TWO_CLUBS));
     expect(ix).not.toBe(undefined);
+  });
+
+  it("should allow unbroken heart at start of trick if only option", () => {
+    var next = g.play(exampleGame1, g.TWO_CLUBS);
+    next = g.play(next, g.toCards("C A")[0])
+    next = g.play(next, g.toCards("S 2")[0])
+    next = g.play(next, g.toCards("D 2")[0])
+
+    expect(g.heartsBroken(exampleGame1)).toBeFalsy();
+    expect(g.canPlay(next, g.toCards("H 2")[0])).toBeTruthy();
   });
 });
 
