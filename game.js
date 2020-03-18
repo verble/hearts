@@ -316,8 +316,17 @@ const playableCards = function(game) {
   }
 
   if (isStartOfTrick(game) && !heartsBroken(game)) {
-    // can play anything except hearts
-    return currentHand(game).filter(card => card.suit != HEARTS);
+    const notHearts = currentHand(game).filter(card => card.suit != HEARTS);
+
+    // can we play something other than hearts?
+    // TODO: make this work for any point card, not just hearts
+    if (notHearts.length > 0) {
+      // yes, can play anything except hearts
+      return notHearts;
+    } else {
+      // no, can play anything
+      return currentHand(game).slice(0);
+    }
   } else if (isStartOfTrick(game)) {
     // can play anything
     return currentHand(game).slice(0);
