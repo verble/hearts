@@ -44,6 +44,14 @@ describe("A game object", () => {
     expect(ix).not.toBe(undefined);
   });
 
+  it("should not be over on initialization", () => {
+    expect(g.isOver(randomGame)).toBeFalsy();
+  });
+
+  it("should not have hearts broken on initialization", () => {
+    expect(g.heartsBroken(randomGame)).toBeFalsy();
+  });
+
   it("should allow unbroken heart at start of trick if only option", () => {
     var next = g.play(exampleGame1, g.TWO_CLUBS);
     next = g.play(next, g.toCards("C A")[0])
