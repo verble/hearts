@@ -1,14 +1,25 @@
-import * as g from "./game";
+import { toCards, TWO_CLUBS, NEW_DECK } from "./card.js";
+import {
+  newGame, 
+  WEST,
+  isOver,
+  currentHand,
+  heartsBroken,
+  play,
+  canPlay,
+  score,
+} from "./game.js";
+import { newState, advance, RANDOM } from "./app.js";
 
-const randomGame = g.newGame();
+const randomGame = newGame();
 
 const exampleGame1 = {
-  turn: g.WEST,
+  turn: WEST,
   hands: [
-    g.toCards("H 2 3 4 5 6 7 8 9 10 J K Q C A"),
-    g.toCards("S 2 3 4 5 6 7 8 9 10 J K Q A"),
-    g.toCards("D 2 3 4 5 6 7 8 9 10 J K Q A"),
-    g.toCards("C 2 3 4 5 6 7 8 9 10 J K Q H A"),
+    toCards("H 2 3 4 5 6 7 8 9 10 J K Q C A"),
+    toCards("S 2 3 4 5 6 7 8 9 10 J K Q A"),
+    toCards("D 2 3 4 5 6 7 8 9 10 J K Q A"),
+    toCards("C 2 3 4 5 6 7 8 9 10 J K Q H A"),
   ],
   tricks: [],
   currentTrick: [],
@@ -16,9 +27,9 @@ const exampleGame1 = {
 };
 
 const finishedGame = (() => {
-  let next = g.newState(randomGame);
-  while (!g.isOver(next.game)) {
-    next = g.advance(next, { type: g.RANDOM });
+  let next = newState(randomGame);
+  while (!isOver(next.game)) {
+    next = advance(next, { type: RANDOM });
   }
   return next.game;
 })();
@@ -32,7 +43,7 @@ describe("A game object", () => {
   it("should have one of each card in the deck", () => {
     const cards = randomGame.hands.flat();
 
-    const hasAll = g.NEW_DECK.every(searchCard => {
+    const hasAll = NEW_DECK.every(searchCard => {
       return cards.find(card => card.eq(searchCard)) != undefined;
     });
 
@@ -40,32 +51,32 @@ describe("A game object", () => {
   });
 
   it("should start with the holder of the two of clubs", () => {
-    let ix = g.currentHand(randomGame).find(card => card.eq(g.TWO_CLUBS));
+    let ix = currentHand(randomGame).find(card => card.eq(TWO_CLUBS));
     expect(ix).not.toBe(undefined);
   });
 
   it("should not be over on initialization", () => {
-    expect(g.isOver(randomGame)).toBeFalsy();
+    expect(isOver(randomGame)).toBeFalsy();
   });
 
   it("should not have hearts broken on initialization", () => {
-    expect(g.heartsBroken(randomGame)).toBeFalsy();
+    expect(heartsBroken(randomGame)).toBeFalsy();
   });
 
   it("should allow unbroken heart at start of trick if only option", () => {
-    var next = g.play(exampleGame1, g.TWO_CLUBS);
-    next = g.play(next, g.toCards("C A")[0])
-    next = g.play(next, g.toCards("S 2")[0])
-    next = g.play(next, g.toCards("D 2")[0])
+    var next = play(exampleGame1, TWO_CLUBS);
+    next = play(next, toCards("C A")[0])
+    next = play(next, toCards("S 2")[0])
+    next = play(next, toCards("D 2")[0])
 
-    expect(g.heartsBroken(exampleGame1)).toBeFalsy();
-    expect(g.canPlay(next, g.toCards("H 2")[0])).toBeTruthy();
+    expect(heartsBroken(exampleGame1)).toBeFalsy();
+    expect(canPlay(next, toCards("H 2")[0])).toBeTruthy();
   });
 });
 
 describe("A finished round", () => {
   it("should have 26 or 78 total points", () => {
-    const sum = g.score(finishedGame).reduce((a, b) => a + b);
+    const sum = score(finishedGame).reduce((a, b) => a + b);
     expect(sum == 26 || sum == 78).toBeTruthy();
   });
 });
