@@ -19,7 +19,7 @@ const finishedGame = (() => {
   while (!g.isOver(next.game)) {
     next = g.advance(next, { type: g.RANDOM });
   }
-  return next;
+  return next.game;
 })();
 
 describe("a new game object", () => {
@@ -46,7 +46,7 @@ describe("a new game object", () => {
 
 describe("A finished round", () => {
   it("should have 26 or 78 total points", () => {
-    const sum = g.score(finishedGame.game).reduce((a, b) => a + b);
+    const sum = g.score(finishedGame).reduce((a, b) => a + b);
     expect(sum == 26 || sum == 78).toBeTruthy();
   });
 });
