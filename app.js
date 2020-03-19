@@ -317,8 +317,6 @@ const drawNames = function(ctx, names) {
 const draw = function(ctx, scoreDisplay, state) {
   drawBackground(ctx);
 
-  console.log(state);
-
   const trick = function() {
     if (state.uiState === PAUSED) {
       return state.game.tricks[state.game.tricks.length - 1];
@@ -466,8 +464,6 @@ export const computerTurn = function(state) {
 };
 
 export const advance = function(state, action) {
-
-  console.log(action);
 
   // CONTINUE = next computer player goes or start next trick
   // PLAY card = play selected card
