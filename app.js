@@ -1,10 +1,8 @@
 import {
   Card,
   randomDeck,
-  cardDisplayCompare,
   TWO_CLUBS,
   QUEEN_SPADES,
-  rankCompare,
   HEARTS,
 } from "./card.js";
 import {

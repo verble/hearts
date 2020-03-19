@@ -1,8 +1,8 @@
 import {
   randomDeck,
-  cardDisplayCompare,
+  Card,
   TWO_CLUBS,
-  rankCompare,
+  Rank,
   HEARTS,
   QUEEN_SPADES,
 } from "./card.js";
@@ -18,7 +18,7 @@ const makeHands = function(deck) {
   const handSize = deck.length / 4;
   for (let i = 0; i < 4; i++) {
     let hand = deck.splice(0, handSize);
-    hand.sort(cardDisplayCompare);
+    hand.sort(Card.compare);
     hands.push(hand);
   }
 
@@ -129,7 +129,7 @@ const trickWinner = function(trick) {
 
     let followedSuit = leadingSuit === nextCard.suit;
     let higherRanked =
-      rankCompare(trick[winningPlayIx].card.rank, nextCard.rank) < 0;
+      Rank.compare(trick[winningPlayIx].card.rank, nextCard.rank) < 0;
 
     if (followedSuit && higherRanked) {
       winningPlayIx = i;

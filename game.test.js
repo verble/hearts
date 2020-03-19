@@ -1,4 +1,4 @@
-import { toCards, TWO_CLUBS, NEW_DECK } from "./card.js";
+import { toCards, TWO_CLUBS, STANDARD_DECK } from "./card.js";
 import {
   newGame, 
   WEST,
@@ -43,7 +43,7 @@ describe("A game object", () => {
   it("should have one of each card in the deck", () => {
     const cards = randomGame.hands.flat();
 
-    const hasAll = NEW_DECK.every(searchCard => {
+    const hasAll = STANDARD_DECK.every(searchCard => {
       return cards.find(card => card.eq(searchCard)) != undefined;
     });
 
