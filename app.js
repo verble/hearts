@@ -26,14 +26,15 @@ import {
   NORMAL,
   PAUSED,
   getSelectedCard,
+  shouldPause,
 } from "./ui.js";
 import { pick } from "./util.js";
 
 // reducer actions
-export const NEW_GAME = "new_game";
-export const RANDOM = "random";
-export const CONTINUE = "continue";
 export const PLAY = "play";
+export const AI_MOVE = "ai_move";
+export const CONTINUE = "continue";
+export const NEW_GAME = "new_game";
 
 const Application = function(state, reducer, drawer) {
   this.state = state;
@@ -77,56 +78,63 @@ export const computerTurn = function(state) {
   }
 };
 
+// converts a canvas click into the correct action
+const actionFromClick = function(x, y, state) {
+  const card = getSelectedCard(state.game, x, y);
+  if (card != null) {
+    return { type: PLAY, card };
+  } else if (state.uiState === PAUSED) {
+    return { type: CONTINUE };
+  } else if (state.game.turn != SOUTH && !isOver(state.game)) {
+    return { type: AI_MOVE };
+  } else {
+    // no op
+    return null;
+  }
+}
+
 export const advance = function(state, action) {
 
-  // CONTINUE = next computer player goes or start next trick
-  // PLAY card = play selected card
+  // PLAY card = play selected card, do nothing if invalid move
+  // AI_MOVE = play card chosen by ai
+  // CONTINUE = clear paused interface
   // NEW_GAME = start new game
-  // RANDOM = for testing, current player makes random legal move
 
   switch (action.type) {
   case PLAY:
-    if (state.uiState === PAUSED) {
-      return {
-        ...state,
-        uiState: NORMAL
-      };
-    }
-    // is it the player's turn?
-    if (state.game.turn === SOUTH) {
-      // legal move?
-      if (canPlay(state.game, action.card)) {
-        return {
-          ...state,
-          game: play(state.game, action.card)
-        };
-      } else {
-        // illegal, do nothing
+    return (() => {
+      const updatedGame = play(state.game, action.card);
+      if (updatedGame === state.game) {
+        // invalid move, do nothing
         return state;
       }
-    } else {
-      // no, have the computer go
-      return computerTurn(state);
-    }
-  case CONTINUE:
-    if (state.uiState === PAUSED) {
       return {
         ...state,
-        uiState: NORMAL
+        game: updatedGame,
+        uiState: shouldPause(updatedGame) ? PAUSED : NORMAL,
       };
-    } else if (state.game.turn === SOUTH) {
-      return state;
-    } else {
-      return computerTurn(state);
-    }
-  case NEW_GAME:
+    })();
+    return play(state, card);
+  case AI_MOVE:
+    return (() => {
+      // play a random, valid card
+      const card = pick(playableCards(state.game));
+      const updatedGame = play(state.game, card);
+      return {
+        ...state,
+        game: updatedGame,
+        uiState: shouldPause(updatedGame) ? PAUSED : NORMAL,
+      };
+    })();
+  case CONTINUE:
     return {
-      game: newGame(),
-      uiState: NORMAL
+      ...state,
+      uiState: NORMAL,
     };
-  case RANDOM:
-    return computerTurn(state);
+  case NEW_GAME:
+    return newState();
   default:
+    console.log("Unrecognized action:", action);
     return state;
   }
 };
@@ -150,12 +158,9 @@ document.addEventListener("DOMContentLoaded", function() {
     const x = event.clientX - canvasRect.left;
     const y = event.clientY - canvasRect.top;
 
-    // get selected card if any
-    const card = getSelectedCard(app.state.game, x, y);
-    if (card !== undefined) {
-      app.advance({ type: PLAY, card: card });
-    } else {
-      app.advance({ type: CONTINUE });
+    const action = actionFromClick(x, y, app.state);
+    if (action != null) {
+      app.advance(action);
     }
   });
 

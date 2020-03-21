@@ -50,11 +50,11 @@ export const previousTrick = function(game) {
   return game.tricks[game.tricks.length - 1];
 };
 
-const isStartOfGame = function(game) {
+export const isStartOfGame = function(game) {
   return game.tricks.length === 0 && game.currentTrick.length === 0;
 };
 
-const isStartOfTrick = function(game) {
+export const isStartOfTrick = function(game) {
   return game.currentTrick.length === 0;
 };
 
@@ -177,9 +177,11 @@ export const winners = function(game) {
   return winners;
 };
 
-// TODO: bad moves are ignored
-// don't care whose turn
 export const play = function(game, selected) {
+  // ignore bad moves
+  if (!canPlay(game, selected)) {
+    return game;
+  }
 
   // add move to current trick
   let updatedTrick = [

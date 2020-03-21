@@ -9,7 +9,7 @@ import {
   canPlay,
   score,
 } from "./game.js";
-import { newState, advance, RANDOM } from "./app.js";
+import { newState, advance, AI_MOVE } from "./app.js";
 
 const randomGame = newGame();
 
@@ -29,7 +29,7 @@ const exampleGame1 = {
 const finishedGame = (() => {
   let next = newState(randomGame);
   while (!isOver(next.game)) {
-    next = advance(next, { type: RANDOM });
+    next = advance(next, { type: AI_MOVE });
   }
   return next.game;
 })();

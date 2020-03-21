@@ -7,6 +7,8 @@ import {
   isOver,
   score,
   winners,
+  isStartOfTrick,
+  isStartOfGame,
 } from "./game.js";
 
 const CANVAS_WIDTH = 800;
@@ -334,6 +336,10 @@ export const draw = function(ctx, scoreDisplay, state) {
   } else {
     scoreDisplay.hidden = true;
   }
+};
+
+export const shouldPause = function(game) {
+  return isStartOfTrick(game) && !isStartOfGame(game);
 };
 
 export const ScoreDisplay = function(containingDiv) {
