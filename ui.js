@@ -29,6 +29,25 @@ const CENTER = "center";
 export const NORMAL = "normal"; // waiting on the next move
 export const PAUSED = "paused"; // give user time to see cards played
 
+const Sprite = function(x = 0, y = 0) {
+  this.x = x;
+  this.y = y;
+};
+
+Sprite.prototype.draw = function(ctx) { };
+
+Sprite.prototype.hitTest = function(x, y) {
+  return false;
+};
+
+export const CardSprite = function(card, x = 0, y = 0) {
+  Sprite.call(this, x, y);
+  this.card = card;
+};
+
+CardSprite.prototype = Object.create(Sprite.prototype);
+CardSprite.prototype.constructor = CardSprite;
+
 const BoundingBox = function(x, y, width, height) {
   this.x = x;
   this.y = y;
@@ -214,6 +233,12 @@ const drawReverse = function(ctx, x, y, deg) {
   );
 
   ctx.restore();
+};
+
+CardSprite.prototype.draw = function(ctx) {
+  // draw card centered on sprites coordinates
+  const adjY = this.y + (CARD_HEIGHT / 2);
+  drawReverse(ctx, this.x, adjY, 0);
 };
 
 // (x, y) is located at the bottom middle of fan
@@ -406,4 +431,86 @@ ScoreDisplay.prototype = {
   set winText(value) {
     this.element.querySelector("h1").innerHTML = value;
   }
+};
+
+export const animateDeal = function(ctx) {
+  drawBackground(ctx);
+
+  // NESW order
+  const targets = [
+    { x: CANVAS_WIDTH / 2,          y: -CARD_HEIGHT },
+    { x: CANVAS_WIDTH + CARD_WIDTH, y: CANVAS_HEIGHT / 2 },
+    { x: CANVAS_WIDTH / 2,          y: CANVAS_HEIGHT + CARD_HEIGHT },
+    { x: -CARD_WIDTH,               y: CANVAS_HEIGHT / 2 },
+  ];
+
+  const speed = 2000; // pixels per second
+
+  // create sprites
+  const sprites = [];
+  for (var i = 0; i < 52; i++) {
+    sprites.push(new CardSprite(null, CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2));
+    sprites[i].target = targets[i % 4];
+    sprites[i].animating = true;
+    sprites[i].delay = (52 - i) * 0.07; // seconds
+  };
+
+  // for every card,
+  // move card up/down/left/right off screen
+
+  const draw = function(ctx, state) {
+    drawBackground(ctx);
+    for (var sprite of state.sprites) {
+      sprite.draw(ctx);
+    };
+  };
+
+  const update = function(state, delta) {
+    for (var sprite of state.sprites) {
+      const xDiff = sprite.target.x - sprite.x;
+      const yDiff = sprite.target.y - sprite.y;
+
+      const displacement = speed * delta;
+
+      if (sprite.delay > 0) {
+        sprite.delay -= delta;
+        continue;
+      }
+
+      if (xDiff != 0) {
+        if (Math.abs(xDiff) <= displacement) {
+          sprite.x = sprite.target.x;
+          sprite.animating = false;
+        } else {
+          sprite.x = sprite.x + Math.sign(xDiff) * displacement;
+        }
+      }
+
+      if (yDiff != 0) {
+        if (Math.abs(yDiff) <= displacement) {
+          sprite.y = sprite.target.y;
+          sprite.animating = false;
+        } else {
+          sprite.y = sprite.y + Math.sign(yDiff) * displacement;
+        }
+      };
+    }
+
+    state.animating = sprites.some(sprite => sprite.animating);
+  };
+
+  const run = function(state, previousTime, currentTime) {
+    const delta = (currentTime - previousTime) / 1000; // seconds
+    update(state, delta);
+    draw(ctx, state);
+
+    if (state.animating) {
+      requestAnimationFrame(futureTime => run(state, currentTime, futureTime));
+    } else {
+      console.log("done");
+    };
+  };
+
+  const now = performance.now();
+  run({animating: true, sprites}, now, now);
 };

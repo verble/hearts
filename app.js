@@ -27,6 +27,7 @@ import {
   PAUSED,
   getSelectedCard,
   shouldPause,
+  animateDeal,
 } from "./ui.js";
 import { pick } from "./util.js";
 
@@ -169,5 +170,7 @@ document.addEventListener("DOMContentLoaded", function() {
   };
 
   // initial draw
-  app.draw();
+  // app.draw();
+
+  animateDeal(ctx);
 });
